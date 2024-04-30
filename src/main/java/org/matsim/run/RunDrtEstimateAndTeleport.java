@@ -2,7 +2,6 @@ package org.matsim.run;
 
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.application.MATSimApplication;
-import org.matsim.contrib.drt.estimator.DrtEstimator;
 import org.matsim.contrib.drt.estimator.DrtEstimatorModule;
 import org.matsim.contrib.drt.estimator.impl.DetourBasedDrtEstimator;
 import org.matsim.contrib.drt.estimator.impl.PessimisticDrtEstimator;
@@ -12,7 +11,6 @@ import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.DrtConfigs;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contrib.drt.run.MultiModeDrtModule;
-import org.matsim.contrib.dvrp.run.AbstractDvrpModeModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
@@ -24,12 +22,12 @@ import picocli.CommandLine;
 
 import javax.annotation.Nullable;
 
-@CommandLine.Command(header = ":: Run estimate and teleport ::", version = runDrtEstimateAndTeleport.VERSION)
-public class runDrtEstimateAndTeleport extends MATSimApplication {
+@CommandLine.Command(header = ":: Run estimate and teleport ::", version = RunDrtEstimateAndTeleport.VERSION)
+public class RunDrtEstimateAndTeleport extends MATSimApplication {
     static final String VERSION = "1.0";
 
     public static void main(String[] args) {
-        MATSimApplication.run(runDrtEstimateAndTeleport.class, args);
+        MATSimApplication.run(RunDrtEstimateAndTeleport.class, args);
     }
 
     @Nullable
@@ -66,7 +64,8 @@ public class runDrtEstimateAndTeleport extends MATSimApplication {
             controler.addOverridingModule(new AbstractModule() {
                 @Override
                 public void install() {
-                    DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(new PessimisticDrtEstimator(drtCfg));
+                    DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(DetourBasedDrtEstimator.
+                            normalDistributed(1.2, 120, 0.2, 180, 0.3));
                 }
             });
         }
