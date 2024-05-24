@@ -3,8 +3,7 @@ package org.matsim.run;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.application.MATSimApplication;
 import org.matsim.contrib.drt.estimator.DrtEstimatorModule;
-import org.matsim.contrib.drt.estimator.impl.DetourBasedDrtEstimator;
-import org.matsim.contrib.drt.estimator.impl.PessimisticDrtEstimator;
+import org.matsim.contrib.drt.estimator.impl.NetworkBasedDrtEstimator;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
@@ -24,6 +23,12 @@ import javax.annotation.Nullable;
 
 @CommandLine.Command(header = ":: Run estimate and teleport ::", version = RunDrtEstimateAndTeleport.VERSION)
 public class RunDrtEstimateAndTeleport extends MATSimApplication {
+    @CommandLine.Option(names = "--ride-time-std", description = "standard deviation of ride duration", defaultValue = "0.25")
+    private double rideTimeStd;
+
+    @CommandLine.Option(names = "--wait-time-std", description = "standard deviation of waiting time", defaultValue = "0.25")
+    private double waitTimeStd;
+
     static final String VERSION = "1.0";
 
     public static void main(String[] args) {
@@ -64,8 +69,9 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
             controler.addOverridingModule(new AbstractModule() {
                 @Override
                 public void install() {
-                    DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(DetourBasedDrtEstimator.
-                            normalDistributed(1.2, 120, 0.2, 180, 0.3));
+                    DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(NetworkBasedDrtEstimator.
+                            normalDistributedNetworkBasedDrtEstimator(1.2, 120,
+                                    rideTimeStd, 180, waitTimeStd));
                 }
             });
         }
