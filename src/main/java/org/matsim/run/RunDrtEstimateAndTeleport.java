@@ -23,8 +23,17 @@ import javax.annotation.Nullable;
 
 @CommandLine.Command(header = ":: Run estimate and teleport ::", version = RunDrtEstimateAndTeleport.VERSION)
 public class RunDrtEstimateAndTeleport extends MATSimApplication {
+    @CommandLine.Option(names = "--ride-time-alpha", description = "standard deviation of ride duration", defaultValue = "1.25")
+    private double rideTimeAlpha;
+
+    @CommandLine.Option(names = "--ride-time-beta", description = "standard deviation of ride duration", defaultValue = "300")
+    private double rideTimeBeta;
+
     @CommandLine.Option(names = "--ride-time-std", description = "standard deviation of ride duration", defaultValue = "0.25")
     private double rideTimeStd;
+
+    @CommandLine.Option(names = "--wait-time-mean", description = "standard deviation of ride duration", defaultValue = "300")
+    private double meanWaitTime;
 
     @CommandLine.Option(names = "--wait-time-std", description = "standard deviation of waiting time", defaultValue = "0.25")
     private double waitTimeStd;
@@ -70,8 +79,8 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
                 @Override
                 public void install() {
                     DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(NetworkBasedDrtEstimator.
-                            normalDistributedNetworkBasedDrtEstimator(1.2, 120,
-                                    rideTimeStd, 180, waitTimeStd));
+                            normalDistributedNetworkBasedDrtEstimator(rideTimeAlpha, rideTimeBeta, rideTimeStd,
+                                    meanWaitTime, waitTimeStd));
                 }
             });
         }
