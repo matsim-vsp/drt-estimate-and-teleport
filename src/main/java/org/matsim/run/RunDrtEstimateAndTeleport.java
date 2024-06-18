@@ -8,6 +8,7 @@ import org.matsim.contrib.drt.estimator.DrtEstimatorModule;
 import org.matsim.contrib.drt.estimator.impl.DirectTripBasedDrtEstimator;
 import org.matsim.contrib.drt.estimator.impl.distribution.NormalDistributionGenerator;
 import org.matsim.contrib.drt.estimator.impl.trip_estimation.ConstantRideDurationEstimator;
+import org.matsim.contrib.drt.estimator.impl.waiting_time_estimation.ConstantWaitingTimeEstimator;
 import org.matsim.contrib.drt.estimator.impl.waiting_time_estimation.ShapeFileBasedWaitingTimeEstimator;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
@@ -58,7 +59,7 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
         ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
         MultiModeDrtConfigGroup multiModeDrtConfig = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
         DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfig, config.scoring(), config.routing());
-        for (DrtConfigGroup drtCfg: multiModeDrtConfig.getModalElements()) {
+        for (DrtConfigGroup drtCfg : multiModeDrtConfig.getModalElements()) {
             drtCfg.simulationType = DrtConfigGroup.SimulationType.estimateAndTeleport;
         }
         return config;
@@ -84,19 +85,39 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
         MultiModeDrtConfigGroup multiModeDrtConfigGroup = MultiModeDrtConfigGroup.get(config);
         for (DrtConfigGroup drtCfg : multiModeDrtConfigGroup.getModalElements()) {
             // add the DRT estimator binding
-            controler.addOverridingModule(new AbstractModule() {
-                @Override
-                public void install() {
-                    DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(
-                            new DirectTripBasedDrtEstimator.Builder()
-                                    .setWaitingTimeEstimator(new ShapeFileBasedWaitingTimeEstimator(network, shp.readFeatures(), 300))
-                                    .setWaitingTimeDistributionGenerator(new NormalDistributionGenerator(1, waitTimeStd))
-                                    .setRideDurationEstimator(new ConstantRideDurationEstimator(rideTimeAlpha, rideTimeBeta))
-                                    .setRideDurationDistributionGenerator(new NormalDistributionGenerator(2, rideTimeStd))
-                                    .build()
-                            );
-                }
-            });
+            if (shp.isDefined()) {
+                // ShapeFile-based waiting time estimator will be used
+                controler.addOverridingModule(new AbstractModule() {
+                    @Override
+                    public void install() {
+                        DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(
+                                new DirectTripBasedDrtEstimator.Builder()
+                                        .setWaitingTimeEstimator(new ShapeFileBasedWaitingTimeEstimator(network, shp.readFeatures(), meanWaitTime))
+                                        .setWaitingTimeDistributionGenerator(new NormalDistributionGenerator(1, waitTimeStd))
+                                        .setRideDurationEstimator(new ConstantRideDurationEstimator(rideTimeAlpha, rideTimeBeta))
+                                        .setRideDurationDistributionGenerator(new NormalDistributionGenerator(2, rideTimeStd))
+                                        .build()
+                        );
+                    }
+                });
+            } else {
+                // otherwise, standard waiting time estimator will be used
+                controler.addOverridingModule(new AbstractModule() {
+                    @Override
+                    public void install() {
+                        DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(
+                                new DirectTripBasedDrtEstimator.Builder()
+                                        .setWaitingTimeEstimator(new ConstantWaitingTimeEstimator(meanWaitTime))
+                                        .setWaitingTimeDistributionGenerator(new NormalDistributionGenerator(1, waitTimeStd))
+                                        .setRideDurationEstimator(new ConstantRideDurationEstimator(rideTimeAlpha, rideTimeBeta))
+                                        .setRideDurationDistributionGenerator(new NormalDistributionGenerator(2, rideTimeStd))
+                                        .build()
+                        );
+                    }
+                });
+            }
+
+
         }
     }
 
