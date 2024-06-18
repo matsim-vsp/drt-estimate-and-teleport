@@ -1,9 +1,14 @@
 package org.matsim.run;
 
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.MATSimApplication;
+import org.matsim.application.options.ShpOptions;
 import org.matsim.contrib.drt.estimator.DrtEstimatorModule;
-import org.matsim.contrib.drt.estimator.impl.NetworkBasedDrtEstimator;
+import org.matsim.contrib.drt.estimator.impl.DirectTripBasedDrtEstimator;
+import org.matsim.contrib.drt.estimator.impl.distribution.NormalDistributionGenerator;
+import org.matsim.contrib.drt.estimator.impl.trip_estimation.ConstantRideDurationEstimator;
+import org.matsim.contrib.drt.estimator.impl.waiting_time_estimation.ShapeFileBasedWaitingTimeEstimator;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
@@ -38,6 +43,9 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
     @CommandLine.Option(names = "--wait-time-std", description = "standard deviation of waiting time", defaultValue = "0.25")
     private double waitTimeStd;
 
+    @CommandLine.Mixin
+    private ShpOptions shp = new ShpOptions();
+
     static final String VERSION = "1.0";
 
     public static void main(String[] args) {
@@ -67,6 +75,7 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
     @Override
     protected void prepareControler(Controler controler) {
         Config config = controler.getConfig();
+        Network network = controler.getScenario().getNetwork();
         MultiModeDrtConfigGroup multiModeDrtConfig = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
         controler.addOverridingModule(new DvrpModule());
         controler.addOverridingModule(new MultiModeDrtModule());
@@ -78,9 +87,14 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
             controler.addOverridingModule(new AbstractModule() {
                 @Override
                 public void install() {
-                    DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(NetworkBasedDrtEstimator.
-                            normalDistributedNetworkBasedDrtEstimator(rideTimeAlpha, rideTimeBeta, rideTimeStd,
-                                    meanWaitTime, waitTimeStd));
+                    DrtEstimatorModule.bindEstimator(binder(), drtCfg.mode).toInstance(
+                            new DirectTripBasedDrtEstimator.Builder()
+                                    .setWaitingTimeEstimator(new ShapeFileBasedWaitingTimeEstimator(network, shp.readFeatures(), 300))
+                                    .setWaitingTimeDistributionGenerator(new NormalDistributionGenerator(1, waitTimeStd))
+                                    .setRideDurationEstimator(new ConstantRideDurationEstimator(rideTimeAlpha, rideTimeBeta))
+                                    .setRideDurationDistributionGenerator(new NormalDistributionGenerator(2, rideTimeStd))
+                                    .build()
+                            );
                 }
             });
         }

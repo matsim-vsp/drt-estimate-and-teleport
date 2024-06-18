@@ -12,7 +12,7 @@ alpha_15_beta_900_wt_300 <- read_delim("data/kelheim-no-rejection/alpha1.5-beta9
 
 alpha_15_beta_600_wt_300 <- alpha_15_beta_600_wt_300 %>%
   mutate(max_ride_duration = 1.5 * direct_trip_duration + 600) %>%
-  mutate(normalized_wait_time = total_wait_time / 300) %>%
+  mutate(normalized_wait_time = total_wait_time / 300) #%>%
   select(submission, total_wait_time, normalized_wait_time, actual_ride_duration, direct_trip_duration, max_ride_duration)
 
 # summary_data <- bind_rows(summary_data, alpha_15_beta_300_wt_300 %>%
