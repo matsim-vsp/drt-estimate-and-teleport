@@ -3,16 +3,17 @@ library(lubridate)
 library(geosphere)
 library(fitdistrplus)
 
-# The data is unfortunately not open sourced
-all_completed_trips <- read_delim("/Users/luchengqi/Desktop/VIA_Rides_202307_202310.csv", delim = ";")
+
+setwd("/Users/luchengqi/Documents/GitHub/drt-estimate-and-teleport/src/main/R/data_fitting")
+all_completed_trips <- read_delim("data/real-world-data/VIA_Rides_202307_202310.csv", delim = ";")
 
 processed_data <- all_completed_trips %>%
-  select(Request.ID, Request.Creation.Time, Requested.Pickup.Time, Origin.Lng, Origin.Lat, Destination.Lng, Destination.Lat, Actual.Pickup.Time, Actual.Dropoff.Time, Number.of.Passengers) %>%
+  dplyr::select(Request.ID, Request.Creation.Time, Requested.Pickup.Time, Origin.Lng, Origin.Lat, Destination.Lng, Destination.Lat, Actual.Pickup.Time, Actual.Dropoff.Time, Number.of.Passengers) %>%
   mutate(pre_booking_time = Requested.Pickup.Time - Request.Creation.Time)
 
 ## Ride duration statistics
 rides_data <- processed_data %>%
-  select(Request.ID, Origin.Lng, Origin.Lat, Destination.Lng, Destination.Lat, Actual.Pickup.Time, Actual.Dropoff.Time) %>%
+  dplyr::select(Request.ID, Origin.Lng, Origin.Lat, Destination.Lng, Destination.Lat, Actual.Pickup.Time, Actual.Dropoff.Time) %>%
   mutate(ride_duration = Actual.Dropoff.Time - Actual.Pickup.Time) %>%
   filter(complete.cases(.)) %>%
   filter(ride_duration < 1800) %>% # Assume trip duration above this value to be artifact
