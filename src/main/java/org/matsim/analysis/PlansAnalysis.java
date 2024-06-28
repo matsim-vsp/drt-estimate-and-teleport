@@ -47,7 +47,7 @@ public class PlansAnalysis implements MATSimAppCommand {
             // intermediate iterations
             for (int i = 0; i < iterations; i += interval) {
                 String iterationsFolder = outputFolder + "/ITERS/it." + i;
-                String plansFile = globFile(Path.of(iterationsFolder), "*plans.xml.gz*").toString();
+                String plansFile = globFile(Path.of(iterationsFolder), "*.plans.xml.gz*").toString();
                 Population plans = PopulationUtils.readPopulation(plansFile);
 
                 Map<Integer, MutableInt> drtPlansCountsForIteration = new HashMap<>();
