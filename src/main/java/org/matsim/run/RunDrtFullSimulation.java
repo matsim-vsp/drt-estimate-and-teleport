@@ -1,5 +1,7 @@
 package org.matsim.run;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.application.MATSimApplication;
 import org.matsim.contrib.drt.routing.DrtRoute;
@@ -17,8 +19,14 @@ import org.matsim.core.controler.Controler;
 import javax.annotation.Nullable;
 
 public class RunDrtFullSimulation extends MATSimApplication {
+    private static final Logger log = LogManager.getLogger(RunDrtFullSimulation.class);
+
     public static void main(String[] args) {
+        long startTime = System.currentTimeMillis();
         MATSimApplication.run(RunDrtFullSimulation.class, args);
+        long endTime = System.currentTimeMillis();
+        long elapsedTime = (endTime - startTime) / 1000;
+        log.info("time used = {} seconds", elapsedTime);
     }
 
     @Nullable

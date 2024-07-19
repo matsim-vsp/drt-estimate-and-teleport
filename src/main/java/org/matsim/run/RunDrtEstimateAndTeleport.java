@@ -1,5 +1,7 @@
 package org.matsim.run;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.MATSimApplication;
@@ -49,8 +51,14 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
 
     static final String VERSION = "1.0";
 
+    private static final Logger log = LogManager.getLogger(RunDrtEstimateAndTeleport.class);
+
     public static void main(String[] args) {
+        long startTime = System.currentTimeMillis();
         MATSimApplication.run(RunDrtEstimateAndTeleport.class, args);
+        long endTime = System.currentTimeMillis();
+        long elapsedTime = (endTime - startTime) / 1000;
+        log.info("Time used = {} seconds", elapsedTime);
     }
 
     @Nullable

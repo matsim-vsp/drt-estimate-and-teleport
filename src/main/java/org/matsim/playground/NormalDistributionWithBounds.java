@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Random;
 
 public class NormalDistributionWithBounds {
-
     public static void main(String[] args) {
         Random random = new Random();
         double lowerBound = -1.0;
