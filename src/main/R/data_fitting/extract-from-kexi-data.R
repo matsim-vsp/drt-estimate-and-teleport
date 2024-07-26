@@ -30,10 +30,15 @@ summary(euclidean_dist_model)
 euclidean_dist_model$coefficients
 
 # plot ride duration against direct trip duration
-dir_tt_model <- lm(log_ride_duration ~ direct_trip_duration, data = rides_data)
-#dir_tt_model <- lm(ride_duration ~ direct_trip_duration, data = rides_data)
+#dir_tt_model <- lm(log_ride_duration ~ direct_trip_duration, data = rides_data)
+dir_tt_model <- lm(ride_duration ~ direct_trip_duration, data = rides_data)
 summary(dir_tt_model)
 dir_tt_model$coefficients
+
+## Distribution of actual ride duration
+ggplot(data = rides_data, aes(x = ride_duration)) + 
+  geom_density(fill = "cyan", color = "blue", alpha = 0.5) +
+  xlab("Ride duration [s]")
 
 
 ## Euclidean distance model
@@ -54,9 +59,10 @@ ggplot(distribution_data, aes(x = normalized_ride_duration)) +
 
 ## Direct trip duration model
 # Note: the slope and intercept are read from the output from the line above
-ggplot(data = rides_data, aes(x = direct_trip_duration, y = log_ride_duration)) +
+ggplot(data = rides_data, aes(x = direct_trip_duration, y = ride_duration)) +
   geom_point() +
-  geom_abline(slope = 0.002673351, intercept = 5.364422510, color = "magenta", linetype="dashed", linewidth=1.5) +
+  #geom_abline(slope = 0.002673351, intercept = 5.364422510, color = "magenta", linetype="dashed", linewidth=1.5) +
+  geom_abline(slope = 1.219366, intercept = 177.523819, color = "magenta", linetype="dashed", linewidth=1.5) +
   xlab("Direct ride duration on MATSim network [s]") +
   ylab("Actual ride duration (based on VIA data) [s]") +
   theme_minimal() +

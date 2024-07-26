@@ -63,7 +63,18 @@ alpha_15_beta_600_wt_300 <- alpha_15_beta_600_wt_300 %>%
 
 ggplot(alpha_15_beta_600_wt_300, aes(x = direct_trip_duration, y = actual_ride_duration)) +
   geom_point() +
-  geom_abline(slope = 2.28338, intercept = 57.14167, color="red", linetype = "dashed", size = 1.5)
+  geom_abline(slope = 2.28338, intercept = 57.14167, color="red", linetype = "dashed", size = 1.5) +
+  xlab("Direct ride duration on MATSim network [s]") +
+  ylab("Actual ride duration (based on VIA data) [s]") +
+  theme_minimal() +
+  labs(title = "Scatter plot of the actual ride data with linear regression") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20),  # Center the title
+    axis.title.x = element_text(size = 18),  # Increase x-axis label font size
+    axis.title.y = element_text(size = 18),  # Increase y-axis label font size
+    axis.text.x = element_text(size = 16),   # Increase x-axis text font size
+    axis.text.y = element_text(size = 16)    # Increase y-axis text font size
+  ) 
 
 ## Distribution around regression line
 ggplot(alpha_15_beta_600_wt_300, aes(x = reg_norm_ride_duration)) +

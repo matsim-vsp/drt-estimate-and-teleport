@@ -15,6 +15,7 @@ import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.simwrapper.SimWrapperModule;
 
 import javax.annotation.Nullable;
 
@@ -54,5 +55,6 @@ public class RunDrtFullSimulation extends MATSimApplication {
         controler.addOverridingModule(new DvrpModule());
         controler.addOverridingModule(new MultiModeDrtModule());
         controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfig));
+        controler.addOverridingModule(new SimWrapperModule());
     }
 }

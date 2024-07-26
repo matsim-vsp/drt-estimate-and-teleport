@@ -25,6 +25,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.simwrapper.SimWrapperModule;
 import picocli.CommandLine;
 
 import javax.annotation.Nullable;
@@ -89,6 +90,7 @@ public class RunDrtEstimateAndTeleport extends MATSimApplication {
         controler.addOverridingModule(new DvrpModule());
         controler.addOverridingModule(new MultiModeDrtModule());
         controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfig));
+        controler.addOverridingModule(new SimWrapperModule());
 
         MultiModeDrtConfigGroup multiModeDrtConfigGroup = MultiModeDrtConfigGroup.get(config);
         for (DrtConfigGroup drtCfg : multiModeDrtConfigGroup.getModalElements()) {
