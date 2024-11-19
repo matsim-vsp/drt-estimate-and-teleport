@@ -11,9 +11,8 @@
 
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
-        <matsim.version>2025.0-SNAPSHOT</matsim.version>
-        <!--		<matsim.version>16.0-PR3160</matsim.version>-->
-        <!--		todo: switch to a fixed release version after PR3160 has been merged-->
+<!--        <matsim.version>2025.0-SNAPSHOT</matsim.version>-->
+        		<matsim.version>2025.0-PR3559</matsim.version>
     </properties>
 
     <repositories>
