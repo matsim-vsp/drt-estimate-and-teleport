@@ -33,6 +33,9 @@ public class PlansAnalysis implements MATSimAppCommand {
     @CommandLine.Option(names = "--interval", description = "interval of writing out intermediate plans", defaultValue = "50")
     private int interval;
 
+    @CommandLine.Option(names = "--memory-size", description = "max number of plans stored in agent's memory", defaultValue = "5")
+    private int memorySize;
+
     public static void main(String[] args) {
         new PlansAnalysis().execute(args);
     }
@@ -48,34 +51,12 @@ public class PlansAnalysis implements MATSimAppCommand {
             for (int i = 0; i < iterations; i += interval) {
                 String iterationsFolder = outputFolder + "/ITERS/it." + i;
                 String plansFile = globFile(Path.of(iterationsFolder), "*.plans.xml.gz*").toString();
-                Population plans = PopulationUtils.readPopulation(plansFile);
-
-                Map<Integer, MutableInt> drtPlansCountsForIteration = new HashMap<>();
-                for (int j = 0; j < 7; j++) {
-                    // memory = 5: 0-5. But during innovation phase, some agents may temporarily have 6 plans!!!
-                    drtPlansCountsForIteration.put(j, new MutableInt());
-                }
-
-                for (Person person : plans.getPersons().values()) {
-                    int numDrtPlans = getNumDrtPlans(person);
-                    drtPlansCountsForIteration.get(numDrtPlans).increment();
-                }
-
-                counterMap.put(i, drtPlansCountsForIteration);
+                analyzeFromPlans(counterMap, i, plansFile);
             }
 
             // final output plans
             String plansFile = globFile(Path.of(outputFolder), "*output_plans.xml.gz*").toString();
-            Population plans = PopulationUtils.readPopulation(plansFile);
-            Map<Integer, MutableInt> drtPlansCountsForFinalOutput = new HashMap<>();
-            for (int j = 0; j < 6; j++) {
-                drtPlansCountsForFinalOutput.put(j, new MutableInt());
-            }
-            for (Person person : plans.getPersons().values()) {
-                int numDrtPlans = getNumDrtPlans(person);
-                drtPlansCountsForFinalOutput.get(numDrtPlans).increment();
-            }
-            counterMap.put(iterations, drtPlansCountsForFinalOutput);
+            analyzeFromPlans(counterMap, iterations, plansFile);
 
             // write down results in a tsv file
             CSVPrinter csvPrinter = new CSVPrinter(new FileWriter(outputFolder + "/output_plan_analysis.tsv"), CSVFormat.TDF);
@@ -91,7 +72,39 @@ public class PlansAnalysis implements MATSimAppCommand {
         return 0;
     }
 
-    private static int getNumDrtPlans(Person person) {
+    private void analyzeFromPlans(Map<Integer, Map<Integer, MutableInt>> counterMap, int i, String plansFile) {
+        Population plans = PopulationUtils.readPopulation(plansFile);
+        Map<Integer, MutableInt> drtPlansCountsForIteration = new HashMap<>();
+        for (int j = 0; j < memorySize + 1; j++) {
+            // In the output plans, there may be one extra plan for some agents.
+            // For those agents, we will remove the worst plan.
+            // So, we will only count up to memorySize
+            drtPlansCountsForIteration.put(j, new MutableInt());
+        }
+
+        for (Person person : plans.getPersons().values()) {
+            int numDrtPlans = getNumDrtPlans(person);
+            drtPlansCountsForIteration.get(numDrtPlans).increment();
+        }
+
+        counterMap.put(i, drtPlansCountsForIteration);
+    }
+
+    private int getNumDrtPlans(Person person) {
+        // remove the worst plan if there are more plans than the memory size
+        if (person.getPlans().size() > memorySize) {
+            double wostScore = Double.POSITIVE_INFINITY;
+            Plan worstPlan = null;
+            for (Plan plan : person.getPlans()) {
+                double score = plan.getScore();
+                if (score < wostScore) {
+                    worstPlan = plan;
+                    wostScore = score;
+                }
+            }
+            person.removePlan(worstPlan);
+        }
+
         int numDrtPlans = 0;
         // Note: here we assume each person only has one leg per day!
         for (Plan plan : person.getPlans()) {

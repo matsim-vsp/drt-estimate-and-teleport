@@ -14,7 +14,6 @@ import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.extras.ScoringGaussianNoiseGenerator;
@@ -25,7 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class RunTestingScenario implements MATSimAppCommand {
+public class RunStrategyTesting2 implements MATSimAppCommand {
     @CommandLine.Option(names = "--sigma", description = "sigma", defaultValue = "0")
     private double sigma;
 
@@ -50,8 +49,11 @@ public class RunTestingScenario implements MATSimAppCommand {
     @CommandLine.Option(names = "--drt-asc-base", description = "drt asc value", defaultValue = "0.0")
     private double drtAscBase;
 
+    @CommandLine.Option(names = "--memory-size", description = "memory size", defaultValue = "5")
+    private int memorySize;
+
     public static void main(String[] args) {
-        new RunTestingScenario().execute(args);
+        new RunStrategyTesting2().execute(args);
     }
 
     @Override
@@ -69,6 +71,7 @@ public class RunTestingScenario implements MATSimAppCommand {
             config.plans().setInputFile(plansPath);
             config.controller().setOutputDirectory(runOutputDirectory);
             config.controller().setLastIteration(iterations);
+            config.replanning().setMaxAgentPlanMemorySize(memorySize);
 
             // make both walk and drt being teleported
             config.routing().clearTeleportedModeParams();
@@ -76,9 +79,7 @@ public class RunTestingScenario implements MATSimAppCommand {
             config.routing().addTeleportedModeParams(new RoutingConfigGroup.TeleportedModeParams().setMode(TransportMode.drt).setTeleportedModeSpeed(drtSpeed));
 
             // re-planning
-            config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta).setWeight(0.9));
-//            config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator).setWeight(0.1));
-//            config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute).setWeight(0.1));
+            config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.SelectExpBeta).setWeight(0.9));
             config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode).setWeight(0.1));
             config.replanning().setFractionOfIterationsToDisableInnovation(0.8);
 
@@ -117,8 +118,8 @@ public class RunTestingScenario implements MATSimAppCommand {
                         Double.toString(delta),
                         Double.toString(drtModeShare),
                         Double.toString(sigma),
-                        Double.toString(0.2),
-                        Double.toString(5)
+                        Double.toString(0.0),
+                        Integer.toString(memorySize)
                 );
                 resultPrinter.close();
             }

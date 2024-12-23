@@ -99,8 +99,8 @@ ggplot(distribution_data_dir_tt, aes(x = normalized_ride_duration)) +
 
 # Fit the log-normal distribution
 #fit <- fitdist(distribution_data_dir_tt$normalized_ride_duration, "lnorm", method = "mle")
-fit <- fitdist(distribution_data_dir_tt$normalized_ride_duration, "lnorm", method = "mge")
-#fit <- fitdist(distribution_data_dir_tt$normalized_ride_duration, "lnorm", method = "mme")
+#fit <- fitdist(distribution_data_dir_tt$normalized_ride_duration, "lnorm", method = "mge")
+fit <- fitdist(distribution_data_dir_tt$normalized_ride_duration, "lnorm", method = "mme")
 #fit <- fitdist(distribution_data_dir_tt$normalized_ride_duration, "lnorm", method = "mde")
 #fit <- fitdist(distribution_data_dir_tt$normalized_ride_duration, "lnorm", method = "qme")
 
