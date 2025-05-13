@@ -16,38 +16,35 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.extras.DiscreteNoiseGenerator;
+import org.matsim.extras.ScoringGaussianNoiseGenerator;
 import picocli.CommandLine;
 
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Random;
 
-public class VerificationRuns implements MATSimAppCommand {
+@Deprecated
+public class VerificationRunsOld implements MATSimAppCommand {
     @CommandLine.Option(names = "--output", description = "root output directory", required = true)
     private String outputDirectory;
 
     @CommandLine.Option(names = "--iters", description = "number of iterations", defaultValue = "300")
     private int iterations;
 
-    @CommandLine.Option(names = "--plans", description = "input plans", defaultValue = "./scenarios/kelheim/hypothetical-plans/all-walk-plans-25pct.xml.gz")
+    @CommandLine.Option(names = "--plans", description = "root output directory", defaultValue = "./scenarios/kelheim/hypothetical-plans/all-walk-plans-25pct.xml.gz")
     private String plansPath;
 
-    @CommandLine.Option(names = "--network", description = "input network", defaultValue = "./scenarios/kelheim/kelheim-v3.0-drt-network.xml.gz")
+    @CommandLine.Option(names = "--network", description = "root output directory", defaultValue = "./scenarios/kelheim/kelheim-v3.0-drt-network.xml.gz")
     private String networkPath;
 
-    @CommandLine.Option(names = "--mi", description = "mode innovation", defaultValue = "0.1")
-    private double mi;
+    @CommandLine.Option(names = "--mc", description = "mode choice", defaultValue = "0.1")
+    private double mc;
 
-    @CommandLine.Option(names = "--gamma", description = "magnitude of the discrete random score", defaultValue = "1.0")
-    private double gamma;
-
-    @CommandLine.Option(names = "--seed", description = "random seed", defaultValue = "1")
-    private long seed;
+    @CommandLine.Option(names = "--pb", description = "p_b value", defaultValue = "0.944")
+    private double pb;
 
     public static void main(String[] args) {
-        new VerificationRuns().execute(args);
+        new VerificationRunsOld().execute(args);
     }
 
     @Override
@@ -65,8 +62,12 @@ public class VerificationRuns implements MATSimAppCommand {
         config.routing().addTeleportedModeParams(new RoutingConfigGroup.TeleportedModeParams().setMode(TransportMode.drt).setTeleportedModeSpeed(5.0));
 
         // re-planning
-        config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode).setWeight(mi));
-        config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.SelectExpBeta).setWeight(1 - mi));
+        double pBest = (2 * pb - 1) * (1 - mc);
+        double pRnd = 1 - pBest - mc;
+
+        config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.BestScore).setWeight(pBest));
+        config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.SelectRandom).setWeight(pRnd));
+        config.replanning().addStrategySettings(new ReplanningConfigGroup.StrategySettings().setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode).setWeight(mc));
         config.replanning().setFractionOfIterationsToDisableInnovation(0.8);
 
         // change mode
@@ -86,7 +87,7 @@ public class VerificationRuns implements MATSimAppCommand {
         controler.addOverridingModule(new AbstractModule() {
             @Override
             public void install() {
-                addEventHandlerBinding().toInstance(new DiscreteNoiseGenerator(gamma, new Random(seed)));
+                addEventHandlerBinding().toInstance(new ScoringGaussianNoiseGenerator(1.64));
             }
         });
         controler.run();
@@ -95,7 +96,7 @@ public class VerificationRuns implements MATSimAppCommand {
         try (CSVParser parser = new CSVParser(Files.newBufferedReader(Path.of(outputDirectory + "/modestats.csv")),
                 CSVFormat.Builder.create().setHeader().setSkipHeaderRecord(true).setDelimiter(";").build())) {
             CSVPrinter resultPrinter = new CSVPrinter(new FileWriter(outputDirectory + "/main-stats.tsv"), CSVFormat.TDF);
-            resultPrinter.printRecord("delta", "drt_mode_share", "memory_size", "gamma", "p_mi");
+            resultPrinter.printRecord("delta", "drt_mode_share", "memory_size", "p_b", "p_mc");
             double drtModeShare = -1;
             for (CSVRecord record : parser) {
                 drtModeShare = Double.parseDouble(record.get(TransportMode.drt));
@@ -105,8 +106,8 @@ public class VerificationRuns implements MATSimAppCommand {
                     Double.toString(0),
                     Double.toString(drtModeShare),
                     Double.toString(2),
-                    Double.toString(gamma),
-                    Double.toString(mi)
+                    Double.toString(pb),
+                    Double.toString(mc)
             );
             resultPrinter.close();
         }
